@@ -597,6 +597,7 @@ class Lunar:
         else:
             thingLevel = 1
         self.thingLevelName = thingLevelDic[thingLevel]
+        self.thingLevel = thingLevel
         return thingLevel
 
     def get_AngelDemon(self):
@@ -1222,7 +1223,11 @@ class Lunar:
                     set(self.goodGodName).intersection(set(['天赦', '天愿']))):
                 self.badThing = ['诸事不忌']
 
-            # 书中未明注忌不注宜
+        # 输出归类
+        self.goodThing = self._normalize_today_things(self.goodThing)
+        self.badThing = self._normalize_today_things(self.badThing)
+
+        # 书中未明注忌不注宜
         rmThing = []
         for thing in self.badThing:
             if thing in self.goodThing:
@@ -1242,3 +1247,33 @@ class Lunar:
         self.badThing.sort(key=sortCollation)
         self.goodThing.sort(key=sortCollation)
         return (self.goodGodName, self.badGodName), (self.goodThing, self.badThing)
+
+    def _normalize_today_things(self, things):
+        if len(things) == 1 and things[0] in THING_NORMALIZE_EXCLUDE:
+            return things
+
+        category_data = {}
+        remainder = []
+        remainder_seen = set()
+
+        for item in things:
+            category = THING_CATEGORY_MAP.get(item)
+            if not category:
+                if item in THING_NORMALIZE_EXCLUDE and item not in remainder_seen:
+                    remainder.append((sortCollation(item), item))
+                    remainder_seen.add(item)
+                continue
+            sort_index = sortCollation(category)
+            current_index = category_data.get(category)
+            if current_index is None or sort_index < current_index:
+                category_data[category] = sort_index
+
+        category_items = []
+        for category, sort_index in category_data.items():
+            category_items.append((sort_index, category))
+
+        category_items.sort(key=lambda x: (x[0], x[1]))
+        normalized = [item for _, item in category_items]
+        remainder.sort(key=lambda x: (x[0], x[1]))
+        normalized.extend(item for _, item in remainder)
+        return normalized

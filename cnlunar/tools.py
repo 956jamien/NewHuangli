@@ -25,5 +25,8 @@ def abListMerge(a, b=ENC_VECTOR_LIST, type=1):
 def sortCollation(x, sortList=thingsSort):
     if x in sortList:
         return sortList.index(x)
-    else:
-        return len(sortList) + 1
+    if '（' in x:
+        base = x.split('（', 1)[0]
+        if base in sortList:
+            return sortList.index(base)
+    return len(sortList) + 1
